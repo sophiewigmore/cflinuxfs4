@@ -10,8 +10,9 @@ on:
         description: 'Version of the cflinuxfs4 stack release a compat stack of (e.g. 1.2.3)'
         required: true
 
+
 jobs:
-  dispatch:
+  create:
     name: Create Compat Stack
     runs-on: ubuntu-22.04
     steps:
@@ -57,7 +58,7 @@ jobs:
     name: Alert on Failure
     runs-on: ubuntu-22.04
     needs: [create]
-    if: ${{ always() && needs.dispatch.result == 'failure' }}
+    if: ${{ always() && needs.version-dispatch.result == 'failure' }}
     steps:
     - name: File Failure Alert Issue
       uses: paketo-buildpacks/github-config/actions/issue/file@main
