@@ -28,7 +28,7 @@ jobs:
       uses: peter-evans/repository-dispatch@v2
       with:
         token: ${{ secrets.TOKEN }}
-        repository: swigmore/cflinuxfs4-compat-release
+        repository: sophiewigmore/cflinuxfs4-compat-release
         event-type: release-dispatch
         client-payload: '{"version": "${{ steps.event.outputs.version }}"}'
 
