@@ -1,4 +1,4 @@
-name: Create cflinuxfs4-compat stack
+name: Send dispatch for cflinuxfs4-compat release creation
 
 on:
   release:
@@ -11,8 +11,8 @@ on:
         required: true
 
 jobs:
-  create:
-    name: Create Compat Stack
+  dispatch:
+    name: Send dispatch for compat stack creation
     runs-on: ubuntu-22.04
     steps:
 
@@ -24,48 +24,31 @@ jobs:
           version="$(jq -r '.release.tag_name' "${GITHUB_EVENT_PATH}" | sed s/^v//)"
         fi
         echo "version=${version}" >> "$GITHUB_OUTPUT"
+
     - name: Repository Dispatch
       uses: peter-evans/repository-dispatch@v2
       with:
-        token: ${{ secrets.TOKEN }}
-        repository: sophiewigmore/cflinuxfs4-compat-release
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: cloudfoundry/cflinuxfs4-compat-release
         event-type: release-dispatch
         client-payload: '{"version": "${{ steps.event.outputs.version }}"}'
 
-    # - name: Checkout
-    #   uses: actions/checkout@v3
-
-    # - name: Create stack
-    #   id: create-stack
-    #   env:
-    #     DOCKERHUB_USERNAME: ${{ secrets.CF_DOCKERHUB_USERNAME }}
-    #     DOCKERHUB_PASSWORD: ${{ secrets.CF_DOCKERHUB_PASSWORD }}
-    #   run: |
-    #     echo "${DOCKERHUB_PASSWORD}" | sudo skopeo login --username "${DOCKERHUB_USERNAME}" --password-stdin index.docker.io
-    #     echo "Making compat stack"
-    #     make compat version=${{ steps.event.outputs.version }}
-    # - name: Upload `${{ steps.retrieve.outputs.metadata-filepath }}`
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: cflinuxfs-compat.tar.gz
-    #     path: cflinuxfs4.x86_64-compat.tar.gz
-
-  # failure:
-  #   name: Alert on Failure
-  #   runs-on: ubuntu-22.04
-  #   needs: [create]
-  #   if: ${{ always() && needs.create.result == 'failure' }}
-  #   steps:
-  #   - name: File Failure Alert Issue
-  #     uses: paketo-buildpacks/github-config/actions/issue/file@main
-  #     with:
-  #       token: ${{ secrets.GITHUB_TOKEN }}
-  #       repo: ${{ github.repository }}
-  #       label: "failure"
-  #       comment_if_exists: true
-  #       issue_title: "Failure: Create Compat Stack Workflow"
-  #       issue_body: |
-  #         Compat stack creation workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
-  #       comment_body: |
-  #          Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
+  failure:
+    name: Alert on Failure
+    runs-on: ubuntu-22.04
+    needs: [dispatch]
+    if: ${{ always() && needs.dispatch.result == 'failure' }}
+    steps:
+    - name: File Failure Alert Issue
+      uses: paketo-buildpacks/github-config/actions/issue/file@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repo: ${{ github.repository }}
+        label: "failure"
+        comment_if_exists: true
+        issue_title: "Failure: Send Compat Stack Dispatch"
+        issue_body: |
+          Compat stack dispatch workflow [failed](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}).
+        comment_body: |
+           Another failure occurred: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}
 
